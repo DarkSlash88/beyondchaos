@@ -47,8 +47,8 @@ VERSION_ROMAN = "II"
 if BETA:
     VERSION_ROMAN += " BETA"
 TEST_ON = False
-TEST_SEED = "44.abcefghijklmnopqrstuvwxyz-partyparty.42069"
-TEST_FILE = "program.rom"
+TEST_SEED = "3.partypartymakeovercapslockoffnotawaitereasyrace-ul.42070"
+TEST_FILE = "FF3.smc"
 seed, flags = None, None
 seedcounter = 1
 sourcefile, outfile = None, None
@@ -2024,6 +2024,7 @@ def manage_monsters():
     randombosses = "randombosses" in activated_codes
     madworld = "madworld" in activated_codes
     darkworld = "darkworld" in activated_codes
+    easyrace = "easyrace" in activated_codes	
     safe_solo_terra = "ancientcave" not in activated_codes
     change_skillset = True if darkworld in activated_codes else None
     final_bosses = (list(range(0x157, 0x160)) + list(range(0x127, 0x12b)) +
@@ -2039,20 +2040,20 @@ def manage_monsters():
                 m.randomize_boost_level()
                 if darkworld:
                     m.increase_enemy_difficulty()
-                m.mutate(change_skillset=True, itembreaker=itembreaker, randombosses=randombosses, madworld=madworld, darkworld=darkworld, safe_solo_terra=False)
+                m.mutate(change_skillset=True, itembreaker=itembreaker, randombosses=randombosses, madworld=madworld, darkworld=darkworld, safe_solo_terra=False, easyrace=easyrace)
             else:
-                m.mutate(change_skillset=change_skillset, itembreaker=itembreaker, randombosses=randombosses, madworld=madworld, darkworld=darkworld, safe_solo_terra=False)
+                m.mutate(change_skillset=change_skillset, itembreaker=itembreaker, randombosses=randombosses, madworld=madworld, darkworld=darkworld, safe_solo_terra=False, easyrace=easyrace)
             if 0x127 <= m.id < 0x12a or m.id == 0x17d or m.id == 0x11a:
                 # boost statues, Atma, final kefka a second time
                 m.randomize_boost_level()
                 if darkworld:
                     m.increase_enemy_difficulty()
-                m.mutate(change_skillset=change_skillset, itembreaker=itembreaker, randombosses=randombosses, madworld=madworld, darkworld=darkworld, safe_solo_terra=False)
+                m.mutate(change_skillset=change_skillset, itembreaker=itembreaker, randombosses=randombosses, madworld=madworld, darkworld=darkworld, safe_solo_terra=False, easyrace=easyrace)
             m.misc1 &= (0xFF ^ 0x4)  # always show name
         else:
             if darkworld:
                 m.increase_enemy_difficulty()
-            m.mutate(change_skillset=change_skillset, itembreaker=itembreaker, randombosses=randombosses, madworld=madworld, darkworld=darkworld, safe_solo_terra=safe_solo_terra)
+            m.mutate(change_skillset=change_skillset, itembreaker=itembreaker, randombosses=randombosses, madworld=madworld, darkworld=darkworld, safe_solo_terra=safe_solo_terra, easyrace=easyrace)
 
         m.tweak_fanatics()
         m.relevel_specifics()
@@ -2795,7 +2796,8 @@ def manage_colorize_animations():
 def manage_items(items, changed_commands=None):
     from itemrandomizer import (set_item_changed_commands, extend_item_breaks)
     always_break = True if "collateraldamage" in activated_codes else False
-    crazy_prices = True if "madworld" in activated_codes else False
+    crazy_prices = True if "madworld" in activated_codes or "easyrace" in activated_codes else False
+    easyrace = True if "easyrace" in activated_codes else False
     extra_effects= True if "masseffect" in activated_codes else False
     wild_breaks = True if "electricboogaloo" in activated_codes else False
 
@@ -2804,7 +2806,7 @@ def manage_items(items, changed_commands=None):
     extend_item_breaks(fout)
 
     for i in items:
-        i.mutate(always_break=always_break, crazy_prices=crazy_prices, extra_effects=extra_effects, wild_breaks=wild_breaks)
+        i.mutate(always_break=always_break, crazy_prices=crazy_prices, extra_effects=extra_effects, wild_breaks=wild_breaks, easyrace=easyrace)
         i.unrestrict()
         i.write_stats(fout)
 
@@ -3138,13 +3140,16 @@ def manage_espers(freespaces):
     return freespaces
 
 
-def manage_treasure(monsters, shops=True):
+def manage_treasure(monsters, shops=True, easyrace=False):
     for mm in get_metamorphs():
         mm.mutate_items()
         mm.write_data(fout)
 
     for m in monsters:
         m.mutate_items()
+        if easyrace:
+           while (m.items[2] == 222) or (m.items[2] == 223) or (m.items[3] == 222) or (m.items[3] == 223):
+                m.mutate_items()
         m.mutate_metamorph()
         m.write_stats(fout)
 
@@ -3194,7 +3199,8 @@ def manage_treasure(monsters, shops=True):
 
 
 def manage_chests():
-    crazy_prices = True if "madworld" in activated_codes else False
+    crazy_prices = True if "madworld" in activated_codes or "easyrace" in activated_codes else False
+    easyrace = True if "easyrace" in activated_codes else False
     locations = get_locations(sourcefile)
     locations = sorted(locations, key=lambda l: l.rank())
     for l in locations:
@@ -3205,7 +3211,7 @@ def manage_chests():
                     if c.contenttype == 0x40 and c.contents == 166:
                         c.contents = 33
 
-        l.mutate_chests(crazy_prices=crazy_prices)
+        l.mutate_chests(crazy_prices=crazy_prices, easyrace=easyrace)
     locations = sorted(locations, key=lambda l: l.locid)
 
     for m in get_monsters():
@@ -3569,9 +3575,10 @@ def manage_formations_hidden(formations, freespaces, esper_graphics=None, form_m
         randombosses = 'randombosses' in activated_codes
         madworld = 'madworld' in activated_codes
         darkworld = 'darkworld' in activated_codes
+        easyrace = 'easyrace' in activated_codes
         ue.auxloc = "Missing (Boss)"
-        ue.mutate_ai(change_skillset=True, itembreaker=itembreaker, randombosses=randombosses, madworld=madworld, darkworld=darkworld)
-        ue.mutate_ai(change_skillset=True, itembreaker=itembreaker, randombosses=randombosses, madworld=madworld, darkworld=darkworld)
+        ue.mutate_ai(change_skillset=True, itembreaker=itembreaker, randombosses=randombosses, madworld=madworld, darkworld=darkworld, easyrace=easyrace)
+        ue.mutate_ai(change_skillset=True, itembreaker=itembreaker, randombosses=randombosses, madworld=madworld, darkworld=darkworld, easyrace=easyrace)
 
         ue.mutate(change_skillset=True, itembreaker=itembreaker, randombosses=randombosses, madworld=madworld, darkworld=darkworld)
         if random.choice([True, False]):
@@ -3714,7 +3721,7 @@ def get_shops():
 def manage_shops():
     buyables = set([])
     descriptions = []
-    crazy_shops = True if "madworld" in activated_codes else False
+    crazy_shops = True if "madworld" in activated_codes or "easyrace" in activated_codes else False
     buy_owned_breakable_tools(fout)
 
     for s in get_shops():
@@ -4858,7 +4865,7 @@ def manage_clock():
     wrong_hours = [0, 1, 2, 3, 4, 5]
     wrong_hours.remove(hour)
     random.shuffle(wrong_hours)
-    hour_to_hex = [dialogue_to_bytes('2', null_terminate=False),dialogue_to_bytes('4', null_terminate=False), dialogue_to_bytes('6', null_terminate=False), dialogue_to_bytes('8', null_terminate=False), dialogue_to_bytes('10', null_terminate=False), dialogue_to_bytes('12', null_terminate=False)]
+    hour_to_hex = [dialogue_to_bytes('2'),dialogue_to_bytes('4'), dialogue_to_bytes('6'), dialogue_to_bytes('8'), dialogue_to_bytes('10'), dialogue_to_bytes('12')]
 
     f = open(sourcefile, 'r+b')
     start = 0xDACC7
@@ -5014,6 +5021,8 @@ def manage_clock():
         second_text_sub2.write(fout)
 
 def manage_ancient(form_music_overrides={}):
+    easyrace = True if "easyrace" in activated_codes else False
+    crazy_prices = True if "madworld" in activated_codes or "easyrace" in activated_codes else False
     change_battle_commands = [41, 42, 43]
     if 'o' not in flags:
         alrs = AutoLearnRageSub(require_gau=True)
@@ -5360,11 +5369,11 @@ def manage_ancient(form_music_overrides={}):
                     and f.get_music() != 0]):
                 return False
         best_drop = formation.get_best_drop()
-        if best_drop and (best_drop.price <= 2 or best_drop.price >= 30000 or "madworld" in activated_codes):
+        if best_drop and (best_drop.price <= 2 or best_drop.price >= 30000 or "madworld" in activated_codes or "easyrace" in activated_codes):
             return True
         return False
 
-    formations = sorted(get_formations(), key=lambda f: f.rank())
+    formations = sorted(get_formations(), key=lambda fout: fout.rank())
     enemy_formations = [
         f for f in formations if f.is_fanatics or
         (f.present_enemies and not f.has_event and not f.has_boss)]
@@ -5626,7 +5635,7 @@ def manage_ancient(form_music_overrides={}):
     num_in_party_sub.write(fout)
     pointer += len(num_in_party_sub.bytestring)
     ally_addrs = {}
-    for chosen in set(optional_chars):
+    for chosen in sorted(set(optional_chars)):
         byte, bit = chosen.slotid // 8, chosen.slotid % 8
         mem_addr = ((0x1b+byte) << 3) | bit
         allysub = Substitution()
@@ -5666,6 +5675,9 @@ def manage_ancient(form_music_overrides={}):
             npc_palettes[g] = list(range(6))
 
     def make_paysub(template, template2, loc, ptr):
+        easyrace = True if "easyrace" in activated_codes else False
+        crazy_prices = True if "madworld" in activated_codes or "easyrace" in activated_codes else False
+
         sub = Substitution()
         sub.set_location(ptr)
         price, message = prices[loc.restrank]
@@ -6029,7 +6041,7 @@ def manage_ancient(form_music_overrides={}):
                 enemy_limit = None
             l.unlock_chests(int(low), int(high), monster=monster,
                             guarantee_miab_treasure=True,
-                            enemy_limit=enemy_limit)
+                            enemy_limit=enemy_limit, crazy_prices=crazy_prices, easyrace=easyrace)
 
         l.write_data(fout)
 
@@ -6171,7 +6183,7 @@ def manage_spookiness():
         nowhere_to_run_bottom_sub.write(fout)
 
 def manage_dances():
-    if 'madworld' in activated_codes:
+    if 'madworld' in activated_codes or 'easyrace' in activated_codes:
          spells = get_ranked_spells(sourcefile)
          dances = random.sample(spells, 32)
          dances = [s.spellid for s in dances]
@@ -6733,6 +6745,7 @@ r   Randomize character locations in the world of ruin.
     secret_codes['rushforpower'] = "OLD VARGAS FIGHT MODE"
     secret_codes['johnnydmad'] = "MUSIC REPLACEMENT MODE"
     secret_codes['johnnyachaotic'] = "MUSIC MANGLING MODE"
+    secret_codes['easyrace'] = "EASY RACE MODE"
     s = ""
     for code, text in secret_codes.items():
         if code in flags:
@@ -6764,7 +6777,7 @@ r   Randomize character locations in the world of ruin.
         except:
             multiplier = None
         set_randomness_multiplier(multiplier)
-    elif 'madworld' in activated_codes:
+    elif 'madworld' in activated_codes or 'easyrace' in activated_codes:
         set_randomness_multiplier(None)
 
     fout = open(outfile, "r+b")
@@ -6796,7 +6809,7 @@ r   Randomize character locations in the world of ruin.
     reseed()
 
     spells = get_ranked_spells(sourcefile)
-    if 'madworld' in activated_codes:
+    if 'madworld' in activated_codes or 'easyrace' in activated_codes:
         random.shuffle(spells)
         for i, s in enumerate(spells):
             s._rank = i+1
@@ -6989,10 +7002,11 @@ r   Randomize character locations in the world of ruin.
 
     if 't' in flags:
         # do this after hidden formations
-        manage_treasure(monsters, shops=True)
+        manage_treasure(monsters, shops=True, easyrace='easyrace' in activated_codes)
         if 'ancientcave' not in activated_codes:
             manage_chests()
-            mutate_event_items(fout, cutscene_skip='notawaiter' in activated_codes)
+            crazy_prices = True if "madworld" in activated_codes or "easyrace" in activated_codes else False
+            mutate_event_items(fout, cutscene_skip='notawaiter' in activated_codes, crazy_prices=crazy_prices, easyrace='easyrace' in activated_codes)
             for fs in fsets:
                 # write new formation sets for MiaBs
                 fs.write_data(fout)

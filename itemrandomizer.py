@@ -503,9 +503,12 @@ class ItemBlock:
         mblock = evade_is_screwed_up(mblock)
         self.features['mblockevade'] = evade | (mblock << 4)
 
-    def mutate_price(self, undo_priceless=False, crazy_prices=False):
+    def mutate_price(self, undo_priceless=False, crazy_prices=False, easyrace=False):
         if crazy_prices:
-            self.price = random.randint(20, 500)
+            if easyrace and self.itemid == 250:
+                self.price = random.randint(250, 500)
+            else:
+                self.price = random.randint(20, 500)
             return
         if self.price <= 2:
             if undo_priceless:
@@ -529,10 +532,10 @@ class ItemBlock:
 
         self.price = min(self.price, 65000)
 
-    def mutate(self, always_break=False, crazy_prices=False, extra_effects=False, wild_breaks=False):
+    def mutate(self, always_break=False, crazy_prices=False, extra_effects=False, wild_breaks=False, easyrace=False):
         global changed_commands
         self.mutate_stats()
-        self.mutate_price(crazy_prices=crazy_prices)
+        self.mutate_price(crazy_prices=crazy_prices, easyrace=easyrace)
         broken, learned = False, False
         if always_break:
             self.mutate_break_effect(always_break=True, wild_breaks=wild_breaks)

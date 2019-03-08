@@ -282,7 +282,7 @@ class ChestBlock:
 
     def mutate_contents(self, guideline=None, monster=None,
                         guarantee_miab_treasure=False, enemy_limit=None,
-                        uniqueness=False, crazy_prices=False):
+                        uniqueness=False, crazy_prices=False, easyrace=False):
         global used_formations, done_items
 
         if self.do_not_mutate and self.contents is not None:
@@ -326,6 +326,9 @@ class ChestBlock:
         formations = get_appropriate_formations()
         formations = [f for f in formations if
                       f.get_guaranteed_drop_value() >= value * 100]
+        if easyrace == True:
+            chance = random.randint(4, 50)					  
+					  
         if 1 <= chance <= 3 and (self.rank or formations):
             # monster
             self.set_content_type(0x20)
@@ -448,21 +451,21 @@ class EventItem:
             desc = "*%s" % desc
         return desc
     
-    def mutate_contents(self, cutscene_skip=False):
+    def mutate_contents(self, cutscene_skip=False, crazy_prices=False, easyrace=False):
         from chestrandomizer import ChestBlock
         c = ChestBlock(0x0, 0x0)
         c.memid = 0
         c.contenttype = self.contenttype
         c.contents = self.contents
         
-        c.mutate_contents(monster=self.monster)
+        c.mutate_contents(monster=self.monster, crazy_prices=crazy_prices, easyrace=easyrace)
         # If we can't show text, we don't want it to be GP,
         # because that event takes 3 bytes instead of 2,
         # and I'd have to rearrange or remove stuff to fit it.
         # So just make sure it's an item.
         if not self.text or (cutscene_skip and self.cutscene_skip_pointer):
             while c.contenttype != 0x40:
-                c.mutate_contents(monster=False)
+                c.mutate_contents(monster=False, crazy_prices=crazy_prices, easyrace=easyrace)
                     
         self.contenttype = c.contenttype
         self.contents = c.contents
@@ -579,7 +582,7 @@ duplicate_event_item_skip_dict = {
 def get_event_items():
     return event_items_dict
     
-def mutate_event_items(fout, cutscene_skip=False):
+def mutate_event_items(fout, cutscene_skip=False, crazy_prices=False, easyrace=False):
     event_item_sub = Substitution()
     event_item_sub.set_location(0x9926)
     event_item_sub.bytestring = bytes([0x8A, 0xD6]) # pointer to new event command 66
